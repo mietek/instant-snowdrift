@@ -10,13 +10,24 @@ sandbox_pre_build_hook () {
 	local tag source_dir constraints
 	expect_args tag source_dir constraints -- "$@"
 
-	# NOTE: There is no pkg-config file for libpq on RedHat derivatives.
+	# NOTE: There is no pkg-config file for libpq in quite
+	# a lot of Linux distributions, including RedHat
+	# derivatives, Debian 6 and 7, and Ubuntu 10 and 12.
+	# However, Ubuntu 14 does include a libpq.pc file.
 	# https://bugzilla.redhat.com/show_bug.cgi?id=977115
 
-	if [[ "${HALCYON_INTERNAL_PLATFORM}" =~ linux-(centos|fedora) ]]; then
-		copy_file "${source_dir}/.halcyon/sandbox-pre-build/libpq.pc" \
+	case "${HALCYON_INTERNAL_PLATFORM}" in
+	'linux-centos'*|'linux-fedora'*)
+		copy_file "${source_dir}/.halcyon/sandbox-pre-build/libpq-redhat.pc" \
 			"${HALCYON_BASE}/sandbox/usr/lib64/pkgconfig/libpq.pc" || return 1
-	fi
+		;;
+	'linux-debian'*|'linux-ubuntu-10'*|'linux-ubuntu-12'*)
+		copy_file "${source_dir}/.halcyon/sandbox-pre-build/libpq-debian.pc" \
+			"${HALCYON_BASE}/sandbox/usr/lib/pkgconfig/libpq.pc" || return 1
+		;;
+	*)
+		true
+	esac
 }
 
 
